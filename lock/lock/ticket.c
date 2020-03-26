@@ -30,7 +30,7 @@ int lock_acquire(lock_t* lk)
 {
 	typeof(lk->owner) id;
 	id = __atomic_fetch_add(&lk->ticket, 1, __ATOMIC_RELAXED);
-	while (__atomic_load_n(&lk->owner, __ATOMIC_RELAXED) != id)
+	while (__atomic_load_n(&lk->owner, __ATOMIC_ACQUIRE) != id)
 		__asm volatile("pause");
 	return 0;
 }
