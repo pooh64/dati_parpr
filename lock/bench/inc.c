@@ -1,11 +1,11 @@
-#include "lock.h"
+#include "../lock.h"
 #include <pthread.h>
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
 
-#define COUNTER_TARGET (32L * 1024L * 512L)
+#define COUNTER_TARGET (128L * 1024L * 512L)
 
 size_t volatile g_counter = 0;
 size_t          g_n_threads;

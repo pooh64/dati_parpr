@@ -1,4 +1,4 @@
-#include "lock.h"
+#include "../lock.h"
 #include <pthread.h>
 #include <stdlib.h>
 
