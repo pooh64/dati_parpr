@@ -1,9 +1,13 @@
+#define _GNU_SOURCE
+
 #include "../lock.h"
 #include <pthread.h>
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
+
+#include <sched.h>
 
 #define COUNTER_TARGET (128L * 1024L * 512L)
 

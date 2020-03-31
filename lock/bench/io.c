@@ -61,9 +61,6 @@ void *test_routine(void *arg)
 
 	} while (!flag_done);
 
-//	printf("[%ld] finished\n", syscall(SYS_gettid));
-	fflush(stdout);
-
 	return NULL;
 handle_err:
 	fprintf(stderr, "test_routine failed\n");

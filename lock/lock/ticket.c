@@ -3,7 +3,7 @@
 #include <stdlib.h>
 #include <stdint.h>
 
-/* #include <immintrin.h> */
+#include <sched.h>
 
 struct lock {
 	union {
@@ -30,8 +30,17 @@ int lock_acquire(lock_t* lk)
 {
 	typeof(lk->owner) id;
 	id = __atomic_fetch_add(&lk->ticket, 1, __ATOMIC_RELAXED);
-	while (__atomic_load_n(&lk->owner, __ATOMIC_ACQUIRE) != id)
+#define MAX_SPINS 16
+	int i = 0;
+	while (__atomic_load_n(&lk->owner, __ATOMIC_ACQUIRE) != id) {
 		__asm volatile("pause");
+#if 1
+		if (i++ == MAX_SPINS) {
+			i = 0;
+			sched_yield();
+		}
+#endif
+	}
 	return 0;
 }
 
