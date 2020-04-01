@@ -1,5 +1,6 @@
 #define _GNU_SOURCE
 
+#include "configure.h"
 #include "../lock.h"
 #include <pthread.h>
 
@@ -11,10 +12,9 @@
 #include <sched.h>
 #include <sys/sysinfo.h>
 
-#define TRANSMIT_TARGET (1024 * 1024 * 32)
 // #define AFFINITY
 
-#define cpu_relax() asm volatile("pause")
+#define cpu_relax() __asm__ volatile("pause")
 
 size_t     g_n_threads;
 pthread_t *g_thread;
@@ -110,7 +110,7 @@ void test_master(channel_t *in, channel_t *out)
 {
 	int rc;
 	uint64_t data, sent = 0, received = 0;
-	while (received < TRANSMIT_TARGET) {
+	while (received < BENCH_RING_TARGET) {
 		if ((rc = channel_write(out, &sent)) < 0)
 			goto handle_err;
 		if (rc)

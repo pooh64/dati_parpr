@@ -1,0 +1,8 @@
+#ifndef _CONFIGURE_H_
+#define _CONFIGURE_H_
+
+#define BENCH_IO_TARGET   (1024L * 128L)
+#define BENCH_INC_TARGET  (1024L * 1024L * 1024L)
+#define BENCH_RING_TARGET (1024L * 1024L * 32L)
+
+#endif
