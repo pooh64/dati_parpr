@@ -3,6 +3,7 @@
 
 !*.md
 !*.c
+!*.cpp
 !*.h
 !*.gitignore
 !*.sh

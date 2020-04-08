@@ -1,4 +1,4 @@
-#include "../lock.h"
+#include "lock.h"
 #include <pthread.h>
 #include <stdlib.h>
 
@@ -18,7 +18,7 @@ lock_t *lock_alloc(long unsigned n_threads)
 int lock_free(lock_t *lk)
 {
 	int rc;
-	if (rc = pthread_spin_destroy(&lk->val))
+	if ((rc = pthread_spin_destroy(&lk->val)))
 		return rc;
 	free(lk);
 	return 0;

@@ -157,9 +157,10 @@ int cpu_set_next(cpu_set_t *set, int cur)
 
 int main(int argc, char **argv)
 {
-	g_n_threads = get_nprocs();
-	printf("Using %zu active cpus\n", g_n_threads);
+	if (argc != 2)
+		exit(EXIT_FAILURE);
 
+	g_n_threads = atoi(argv[1]);
 	if (build_ring())
 		goto handle_err;
 
