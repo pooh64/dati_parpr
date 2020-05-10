@@ -1,7 +1,12 @@
-#include "../lock.h"
+#include "lock.h"
 
 #include <stdlib.h>
 #include <stdint.h>
+
+#include <sched.h>
+#include <time.h>
+
+/* #include <immintrin.h> */
 
 struct lock {
 	union {
@@ -22,17 +27,30 @@ lock_t *lock_alloc(long unsigned n_threads)
 int lock_acquire(lock_t* lk)
 {
 	register typeof(&lk->state) ptr = &lk->state;
-	while (!__atomic_compare_exchange(
+#if 0
+	if (__builtin_expect((__atomic_compare_exchange(
+		ptr, &(typeof(*ptr)){0}, &(typeof(*ptr)){1},
+		1, __ATOMIC_ACQUIRE, __ATOMIC_ACQUIRE)), 1))
+		return 0;
+#else
+	if (__builtin_expect((__atomic_exchange_n(ptr, 1, __ATOMIC_ACQUIRE)),
+		0) == 0)
+		return 0;
+#endif
+	do {
+		do {
+			sched_yield();
+		} while (__atomic_load_n(ptr, __ATOMIC_ACQUIRE) != 0);
+	} while (!__atomic_compare_exchange(
 			ptr, &(typeof(*ptr)){0}, &(typeof(*ptr)){1},
-			1, __ATOMIC_ACQUIRE, __ATOMIC_ACQUIRE))
-		/* nothing */;
+			1, __ATOMIC_ACQUIRE, __ATOMIC_ACQUIRE));
 	return 0;
 }
 
 int lock_release(lock_t* lk)
 {
 	register typeof(&lk->state) ptr = &lk->state;
-	__atomic_store(ptr, &(typeof(*ptr)){0}, __ATOMIC_RELEASE);
+	__atomic_store_n(ptr, 0, __ATOMIC_RELEASE);
 	return 0;
 }
 

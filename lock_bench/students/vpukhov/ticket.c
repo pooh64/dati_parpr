@@ -1,4 +1,4 @@
-#include "../lock.h"
+#include "lock.h"
 
 #include <stdlib.h>
 #include <stdint.h>
