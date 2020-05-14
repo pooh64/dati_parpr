@@ -1,10 +1,12 @@
 #pragma once
 
+#include <cstdint>
+
 #if defined (__x86_64__) || defined (_M_X64)
 
 template <typename T>
-struct tag_ptr<T> {
-	typedef tag_t uint16_t;
+struct tag_ptr {
+	typedef uint16_t tag_t;
 
 	union {
 		uint64_t raw;
@@ -25,7 +27,7 @@ struct tag_ptr<T> {
 
 	void set_ptr(T *ptr)
 	{
-		set(ptr, data.tag);
+		set(ptr, data.arr[tag_index]);
 	}
 
 	void set_tag(tag_t tag)
