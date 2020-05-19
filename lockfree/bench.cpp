@@ -5,12 +5,6 @@
 #include <thread>
 #include <future>
 
-bool shared_ptr_test()
-{
-	std::shared_ptr<int> sptr;
-	return std::atomic_is_lock_free(&sptr);
-}
-
 void simple_run()
 {
 	std::cout << "----simple_run----\n";
@@ -20,14 +14,14 @@ void simple_run()
 		stk.push(val);
 	stk.dump_unsynchronized(std::cout);
 
+	int val;
 	for (long i = vec.size() - 1; i >= 0; --i) {
-		auto ptr = stk.pop();
-		if (ptr == nullptr)
+		if (!stk.pop(&val))
 			goto test_failed;
-		if (*ptr != vec[i])
+		if (val != vec[i])
 			goto test_failed;
 	}
-	if (stk.pop() != nullptr)
+	if (stk.pop(&val))
 		goto test_failed;
 
 	std::cout << "----simple_run passed----\n";
@@ -53,11 +47,11 @@ int transfer_test_producer(lf_stack<int> *stk)
 int transfer_test_consumer(lf_stack<int> *stk)
 {
 	int sum = 0;
-	std::shared_ptr<int> ptr;
+	int val;
 	for (size_t i = 0; i < TRANSFER_TEST_SZ; ++i) {
-		while ((ptr = stk->pop()) == nullptr)
+		while (!stk->pop(&val))
 			__cpu_relax();
-		sum += *ptr;
+		sum += val;
 	}
 	return sum;
 }
@@ -97,7 +91,6 @@ test_failed:
 
 int main()
 {
-	std::cout << "shared_ptr lock-free = " << shared_ptr_test() << "\n";
 	simple_run();
 	transfer_test();
 	return 0;
