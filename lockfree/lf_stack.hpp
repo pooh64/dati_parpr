@@ -18,13 +18,14 @@ struct lf_stack {
 	struct node {
 		T data;
 		std::atomic<uint16_t> ref_count;
-		tag_ptr<node> next;
+		std::atomic<tag_ptr<node>> next;
 		node(T const &data_)
 			: data(data_), ref_count(0) {}
 	};
 	std::atomic<tag_ptr<node>> head;
 
-	void increase_head_tag(tag_ptr<node> &old_head);
+	tag_ptr<node> inc_tag(std::atomic<tag_ptr<node>> &next);
+
 	void push(T const &val);
 	bool pop(T *res);
 	std::ostream &dump_unsynchronized(std::ostream& os);
@@ -45,37 +46,41 @@ struct lf_stack {
 };
 
 template <typename T>
-void lf_stack<T>::increase_head_tag(tag_ptr<node> &old_head)
+tag_ptr<typename lf_stack<T>::node>
+lf_stack<T>::inc_tag(std::atomic<tag_ptr<lf_stack<T>::node>> &next)
 {
-	tag_ptr<node> new_head;
+	tag_ptr<node> old_next = next.load();
+	tag_ptr<node> new_next;
 	while (1) {
-		new_head = old_head;
-		new_head.set_tag(new_head.get_tag() + 1);
-		if (head.compare_exchange_strong(old_head, new_head))
+		new_next.set(old_next.get_ptr(), old_next.get_tag() + 1);
+		if (head.compare_exchange_strong(old_next, new_next))
 			break;
 		__cpu_relax();
 	}
-	old_head.set_tag(new_head.get_tag());
+	//old_next.set_tag(new_next.get_tag());
+	return new_next;
 }
 
 template <typename T>
 void lf_stack<T>::push(T const &data)
 {
-	tag_ptr<node> new_node;
+	tag_ptr<node> new_node, old_head;
 	new_node.set_ptr(new node(data));
 	new_node.set_tag(1);
-	new_node.get_ptr()->next = head.load();
-	while (!head.compare_exchange_weak(new_node.get_ptr()->next,
-					   new_node))
+	old_head = head.load();
+	new_node.get_ptr()->next = old_head;
+
+	while (!head.compare_exchange_weak(old_head, new_node)) {
+		new_node.get_ptr()->next = old_head;
 		__cpu_relax();
+	}
 }
 
 template <typename T>
 bool lf_stack<T>::pop(T *res)
 {
-	tag_ptr<node> old_head = head.load();
 	while (1) {
-		increase_head_tag(old_head);
+		tag_ptr<node> old_head = inc_tag(head);
 		node *const ptr = old_head.get_ptr();
 		if (!ptr) {
 			return false;
@@ -103,7 +108,7 @@ std::ostream& lf_stack<T>::dump_unsynchronized(std::ostream& os)
 	size_t counter = 0;
 	while (ptr) {
 		os << "[" << counter << "] = " << ptr->data << "\n";
-		ptr = ptr->next.get_ptr(); counter++;
+		ptr = ptr->next.load().get_ptr(); counter++;
 	}
 	os << "--------\n";
 	return os;
