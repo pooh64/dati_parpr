@@ -40,7 +40,7 @@ struct lf_stack {
 
 	~lf_stack()
 	{
-		int val;
+		T val;
 		while (pop(&val));
 	}
 };
@@ -57,7 +57,6 @@ lf_stack<T>::inc_tag(std::atomic<tag_ptr<lf_stack<T>::node>> &next)
 			break;
 		__cpu_relax();
 	}
-	//old_next.set_tag(new_next.get_tag());
 	return new_next;
 }
 
@@ -87,7 +86,7 @@ bool lf_stack<T>::pop(T *res)
 		}
 		if (head.compare_exchange_strong(old_head, ptr->next)) {
 			*res = ptr->data;
-			int const tag_increase = old_head.get_tag() - 2;
+			uint16_t const tag_increase = old_head.get_tag() - 2;
 			if (ptr->ref_count.fetch_add(tag_increase)
 					== -tag_increase) {
 				delete ptr;

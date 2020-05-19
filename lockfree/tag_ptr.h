@@ -16,8 +16,8 @@ struct tag_ptr {
 	static const int tag_index = 3;
 	static const uint64_t ptr_mask = (1L << 48L) - 1;
 
-	tag_t get_tag() { return data.arr[tag_index]; }
-	T *get_ptr() { return (T*)(ptr_mask & data.raw); }
+	tag_t get_tag() const { return data.arr[tag_index]; }
+	T *get_ptr() const { return (T*)(ptr_mask & data.raw); }
 
 	void set(T *ptr, tag_t tag)
 	{
@@ -33,6 +33,30 @@ struct tag_ptr {
 	void set_tag(tag_t tag)
 	{
 		data.arr[tag_index] = tag;
+	}
+
+	void inc_tag()
+	{
+		data.arr[tag_index]++;
+	}
+
+	bool is_marked()
+	{
+		return data.raw & ((uint64_t) 1);
+	}
+
+	tag_ptr get_marked() const
+	{
+		tag_ptr rv;
+		rv.data.raw = data.raw | ((uint64_t) 1);
+		return rv;
+	}
+
+	tag_ptr get_unmarked() const
+	{
+		tag_ptr rv;
+		rv.data.raw = data.raw & (~(uint64_t) 1);
+		return rv;
 	}
 
 	bool operator==(volatile tag_ptr const &p) const
