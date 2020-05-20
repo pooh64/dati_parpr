@@ -35,9 +35,11 @@ struct tag_ptr {
 		data.arr[tag_index] = tag;
 	}
 
-	void inc_tag()
+	tag_ptr get_inc()
 	{
-		data.arr[tag_index]++;
+		tag_ptr rv = *this;
+		rv.data.arr[tag_index]++;
+		return rv;
 	}
 
 	bool is_marked()

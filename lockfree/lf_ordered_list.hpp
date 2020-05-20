@@ -30,13 +30,22 @@ struct lf_ordered_list {
 		head->next = tail;
 	}
 
-	~lf_ordered_list()
+	void clear_free_list()
 	{
 		node *ptr;
 		while (free_list.pop(&ptr))
 			delete ptr;
-		delete head.get_ptr();
-		delete tail.get_ptr();
+	}
+
+	~lf_ordered_list()
+	{
+		clear_free_list();
+
+		for (tag_ptr<node> ptr = head; ptr.get_ptr() != nullptr;) {
+			tag_ptr<node> next = ptr->next;
+			delete ptr.get_ptr();
+			ptr = next;
+		}
 	}
 
 	tag_ptr<node> search(T const &search_key, tag_ptr<node> *left_node)
@@ -69,7 +78,7 @@ struct lf_ordered_list {
 			}
 
 			if (((*left_node)->next).compare_exchange_strong(
-					left_node_next, right_node)) {
+					left_node_next, right_node.get_inc())) {
 				if ((right_node != tail) &&
 						(right_node->next).load().is_marked())
 					goto search_again;
@@ -92,7 +101,7 @@ struct lf_ordered_list {
 			}
 			new_node->next = right_node;
 			if ((left_node->next).compare_exchange_strong(right_node,
-						new_node))
+						new_node.get_inc()))
 				return true;
 		} while (1);
 	}
@@ -120,11 +129,11 @@ struct lf_ordered_list {
 			if (!right_node_next.is_marked()) {
 				if ((right_node->next).compare_exchange_strong(
 						right_node_next,
-						right_node_next.get_marked()))
+						right_node_next.get_marked().get_inc()))
 					break;
 			}
 		} while (true);
-		if (!(left_node->next).compare_exchange_strong(right_node, right_node_next))
+		if (!(left_node->next).compare_exchange_strong(right_node, right_node_next.get_inc()))
 			right_node = search(right_node->key, &left_node);
 		else
 			free_list.push(right_node.get_ptr());
@@ -135,7 +144,7 @@ struct lf_ordered_list {
 	{
 		tag_ptr<node> ptr = head->next;
 		std::cout << "[head]\n";
-		while (ptr != tail) {
+		while (ptr.get_ptr() != tail.get_ptr()) {
 			std::cout << "[" << ptr->key << "]\n";
 			ptr = ptr->next;
 		}
