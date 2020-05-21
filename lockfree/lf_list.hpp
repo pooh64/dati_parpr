@@ -4,7 +4,7 @@
 #include "lf_stack.hpp"
 
 template <typename T>
-struct lf_ordered_list {
+struct lf_list {
 	struct node {
 		T key;
 		std::atomic<tag_ptr<node>> next;
@@ -23,7 +23,7 @@ struct lf_ordered_list {
 	tag_ptr<node> tail;
 	lf_stack<node*> free_list;
 
-	lf_ordered_list()
+	lf_list()
 	{
 		head.set(new node(0), 0);
 		tail.set(new node(0), 0);
@@ -37,7 +37,7 @@ struct lf_ordered_list {
 			delete ptr;
 	}
 
-	~lf_ordered_list()
+	~lf_list()
 	{
 		clear_free_list();
 

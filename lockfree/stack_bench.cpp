@@ -35,17 +35,21 @@ test_failed:
 
 int transfer_test_producer(lf_stack<int> *stk)
 {
+	std::cout << "producer started\n";
 	int sum = 0;
 	for (size_t i = 0; i < TRANSFER_TEST_SZ; ++i) {
 		int val = rand();
 		sum += val;
 		stk->push(val);
 	}
+
+	std::cout << "producer finished\n";
 	return sum;
 }
 
 int transfer_test_consumer(lf_stack<int> *stk)
 {
+	std::cout << "consumer started\n";
 	int sum = 0;
 	int val;
 	for (size_t i = 0; i < TRANSFER_TEST_SZ; ++i) {
@@ -53,6 +57,8 @@ int transfer_test_consumer(lf_stack<int> *stk)
 			__cpu_relax();
 		sum += val;
 	}
+
+	std::cout << "consumer finished\n";
 	return sum;
 }
 
@@ -89,9 +95,40 @@ test_failed:
         std::cout << "----transfer_run failed----\n";
 }
 
-int main()
+void stress_routine(lf_stack<int> *stk, size_t sz)
 {
-	simple_run();
-	transfer_test();
+	for (size_t i = 0; i < sz; ++i) {
+		int val = rand();
+		if (val % 10 == 0)
+			stk->push(val);
+		else
+			stk->pop(&val);
+	}
+}
+
+void stress_test(size_t sz, int n_thr)
+{
+	std::vector<std::thread> thr;
+	lf_stack<int> stk;
+
+	for (int i = 0; i < n_thr; ++i)
+		thr.push_back(std::thread(stress_routine, &stk, sz));
+
+	for (auto &t: thr)
+		t.join();
+}
+
+int main(int argc, char **argv)
+{
+	if (argc != 2) {
+		std::cout << "argv\n";
+		return 1;
+	}
+
+	size_t sz = 1024L * 1024L;
+	int n_thr = atoi(argv[1]);
+
+	//simple_run();
+	stress_test(sz, n_thr);
 	return 0;
 }
