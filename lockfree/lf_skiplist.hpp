@@ -43,14 +43,18 @@ struct lf_skiplist {
 
 	~lf_skiplist()
 	{
-		head = head.get_unmarked();
-		tail = tail.get_unmarked();
-		delete head.get_ptr();
-		delete tail.get_ptr();
+		//head = head.get_unmarked();
+		//tail = tail.get_unmarked();
+		//delete head.get_ptr();
+		//delete tail.get_ptr();
 
-		/* cleanup here */
+		tag_ptr<node> ptr = head;
+		while (ptr) {
+			node *tmp = ptr.get_unmarked().get_ptr();
+			ptr = ptr.get_unmarked()->next[0];
+			delete tmp;
+		}
 
-		tag_ptr<node> ptr;
 		while (freelist.pop(&ptr)) {
 			ptr = ptr.get_unmarked();
 			delete ptr.get_ptr();
@@ -154,19 +158,19 @@ struct lf_skiplist {
 		}
 	}
 
-	/* Warning: exp threated as reference only */
-	void try_mark(std::atomic<tag_ptr<node>> &target, tag_ptr<node> exp,
+	/* Warning: expect threated as reference only */
+	void try_mark(std::atomic<tag_ptr<node>> &target, tag_ptr<node> expect,
 			bool new_mark)
 	{
 		tag_ptr<node> new_val;
 		if (new_mark) {
-			exp = exp.get_unmarked();
-			new_val = exp.get_marked();
+			expect = expect.get_unmarked();
+			new_val = expect.get_marked();
 		} else {
-			exp = exp.get_marked();
-			new_val = exp.get_unmarked();
+			expect = expect.get_marked();
+			new_val = expect.get_unmarked();
 		}
-		target.compare_exchange_strong(exp, new_val);
+		target.compare_exchange_strong(expect, new_val);
 	}
 
 	bool remove(V const &val)
