@@ -9,11 +9,11 @@ void stress_routine(test_skiplist *sl, size_t sz)
 	for (size_t i = 0; i < sz; ++i) {
 		int val = rand();
 		if (val % 100 < 5)
-			sl->add(rand());
+			sl->add(rand() % 10);
 		else if (val % 100 < 20)
-			sl->remove(rand());
+			sl->remove(rand() % 10);
 		else
-			sl->contains(rand());
+			sl->contains(rand() % 10);
 	}
 }
 
@@ -36,8 +36,10 @@ int main(int argc, char **argv)
 		return 1;
 	}
 
+	srand(time(NULL));
+
 	int n_thr = atoi(argv[1]);
-	size_t sz = 1024L * 1024L/ n_thr;
+	size_t sz = 1024L * 1024L / n_thr;
 	stress_test(n_thr, sz);
 
 /*	test_skiplist sl;

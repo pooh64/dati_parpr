@@ -124,16 +124,14 @@ struct lf_skiplist {
 		int bot_level = 0;
 		tag_ptr<node> preds[L], succs[L];
 		tag_ptr<node> new_node;
-		new_node.set(nullptr, 0);
+		new_node.set(new node(val, top_level), 0);
 
 		while (1) {
 			if(find(val, preds, succs)) {
-				new_node = new_node.get_unmarked();
-				if (new_node.get_ptr() != nullptr)
-					delete new_node.get_ptr();
+				delete new_node.get_unmarked().get_ptr();
 				return false;
 			}
-			new_node.set(new node(val, top_level), 0);
+			new_node.set(new (new_node.get_unmarked().get_ptr()) node(val, top_level), 0);
 			for (int level = bot_level; level <= top_level; ++level) {
 				tag_ptr<node> succ = succs[level];
 				new_node->next[level] = succ.get_unmarked();
@@ -223,8 +221,10 @@ struct lf_skiplist {
 			while (1) {
 				succ = curr->next[level];
 				while (succ.is_marked()) {
+					succ = curr;
 					curr = pred->next[level];
 					curr = curr.get_unmarked();
+					pred = succ;
 					succ = curr->next[level];
 				}
 				succ = succ.get_unmarked();
