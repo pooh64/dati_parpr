@@ -2,6 +2,7 @@
 #include "lf_list.hpp"
 #include <cstdint>
 #include <limits>
+#include <cassert>
 
 template <typename K, typename V, uint8_t L>
 struct lf_skiplist {
@@ -50,6 +51,7 @@ struct lf_skiplist {
 
 		tag_ptr<node> ptr = head;
 		while (ptr) {
+			assert(ptr.is_marked() == false);
 			node *tmp = ptr.get_unmarked().get_ptr();
 			ptr = ptr.get_unmarked()->next[0];
 			delete tmp;
